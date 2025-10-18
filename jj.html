@@ -664,6 +664,12 @@
             z-index: 100;
             border: 1px solid var(--teal);
             backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .music-player:hover {
+            background: rgba(0, 0, 0, 0.8);
+            transform: scale(1.05);
         }
         
         .music-btn {
@@ -677,6 +683,7 @@
         
         .music-btn:hover {
             transform: scale(1.2);
+            color: var(--accent);
         }
         
         .music-title {
@@ -685,6 +692,30 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .volume-slider {
+            width: 80px;
+            -webkit-appearance: none;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--teal);
+            cursor: pointer;
         }
         
         /* New Elements */
@@ -838,6 +869,17 @@
             .timeline-item::after {
                 left: -40px !important;
             }
+            
+            .music-player {
+                bottom: 10px;
+                left: 10px;
+                right: 10px;
+                padding: 10px 15px;
+            }
+            
+            .volume-control {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -863,7 +905,16 @@
     <div class="music-player">
         <button class="music-btn" id="playBtn"><i class="fas fa-play"></i></button>
         <button class="music-btn" id="pauseBtn"><i class="fas fa-pause"></i></button>
-        <div class="music-title">Our Song: Bless the broken road - Rascal Flatts</div>
+        <div class="volume-control">
+            <i class="fas fa-volume-up" style="color: var(--teal);"></i>
+            <input type="range" min="0" max="1" step="0.1" value="0.7" class="volume-slider" id="volumeSlider">
+        </div>
+        <div class="music-title">Bless the Broken Road - Rascal Flatts</div>
+        <audio id="backgroundMusic" loop>
+            <!-- IMPORTANT: Replace this with your actual song file -->
+            <source src="Rascal Flatts Bless the Broken Road.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
     </div>
     
     <div class="container">
@@ -982,7 +1033,7 @@
                 <div class="timeline">
                     <div class="timeline-item">
                         <div class="timeline-date">August 2024</div>
-                        <div class="timeline-content">our first meeting.</div>
+                        <div class="timeline-content">Our first meeting in PUBG - a random match that would change our lives forever.</div>
                     </div>
                     <div class="timeline-item">
                         <div class="timeline-date">September 2024</div>
@@ -1054,6 +1105,7 @@
         window.addEventListener('load', function() {
             createFloatingHearts();
             initScrollAnimations();
+            initAudioPlayer();
         });
         
         // Scroll animations
@@ -1095,16 +1147,67 @@
             });
         }
         
-        // Music player functionality
-        document.getElementById('playBtn').addEventListener('click', function() {
-            // In a real implementation, you would play your song here
-            alert("Our song would start playing! Add your special song in the final version.");
-        });
-        
-        document.getElementById('pauseBtn').addEventListener('click', function() {
-            // In a real implementation, you would pause the song here
-            alert("Our song would pause!");
-        });
+        // Audio player functionality
+        function initAudioPlayer() {
+            const audio = document.getElementById('backgroundMusic');
+            const playBtn = document.getElementById('playBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const volumeSlider = document.getElementById('volumeSlider');
+            const musicTitle = document.querySelector('.music-title');
+            
+            // Set initial volume
+            audio.volume = volumeSlider.value;
+            
+            // Play button functionality
+            playBtn.addEventListener('click', function() {
+                audio.play().catch(e => {
+                    console.log("Audio play failed:", e);
+                    // If autoplay is blocked, show a message
+                    musicTitle.textContent = "Click to play music";
+                    playBtn.onclick = function() {
+                        audio.play();
+                        musicTitle.textContent = "Bless the Broken Road - Rascal Flatts";
+                    };
+                });
+                musicTitle.textContent = "Bless the Broken Road - Rascal Flatts";
+            });
+            
+            // Pause button functionality
+            pauseBtn.addEventListener('click', function() {
+                audio.pause();
+                musicTitle.textContent = "Music Paused";
+            });
+            
+            // Volume control
+            volumeSlider.addEventListener('input', function() {
+                audio.volume = this.value;
+            });
+            
+            // Update title when song ends
+            audio.addEventListener('ended', function() {
+                musicTitle.textContent = "Song ended - click play to restart";
+            });
+            
+            // Handle audio loading errors
+            audio.addEventListener('error', function() {
+                musicTitle.textContent = "Error loading audio - try refreshing";
+                console.error("Error loading audio file");
+            });
+            
+            // Auto-play when page loads (with user interaction requirement)
+            document.addEventListener('click', function initAudio() {
+                // Try to play audio on first user interaction
+                audio.play().then(() => {
+                    musicTitle.textContent = "Bless the Broken Road - Rascal Flatts";
+                }).catch(e => {
+                    // If autoplay fails, just wait for user to click play
+                    console.log("Autoplay blocked, waiting for user interaction");
+                });
+                
+                // Remove this event listener after first click
+                document.removeEventListener('click', initAudio);
+            });
+        }
         
         // Add interactive click effect
         document.addEventListener('click', function(e) {
